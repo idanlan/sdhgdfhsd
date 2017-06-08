@@ -38,4 +38,24 @@ public class StringUtilTest {
         Assert.assertEquals("A", result);
     }
 
+    @Test
+    public void dbStringToCamelStyle() {
+        String str = "AML_DEE_CV";
+        if (str != null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.valueOf(str.charAt(0)).toUpperCase());
+            for (int i = 1; i < str.length(); i++) {
+                char c = str.charAt(i);
+                if (c != '_') {
+                    sb.append(String.valueOf(c).toLowerCase());
+                } else {
+                    if (i + 1 < str.length()) {
+                        sb.append(String.valueOf(str.charAt(i + 1)).toUpperCase());
+                        i++;
+                    }
+                }
+            }
+            System.out.println(sb.toString());
+        }
+    }
 }

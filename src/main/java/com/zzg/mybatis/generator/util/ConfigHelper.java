@@ -4,15 +4,15 @@ import com.alibaba.fastjson.JSON;
 import com.zzg.mybatis.generator.model.DatabaseConfig;
 import com.zzg.mybatis.generator.model.DbType;
 import com.zzg.mybatis.generator.model.GeneratorConfig;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.URISyntaxException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -209,18 +209,20 @@ public class ConfigHelper {
 
 	public static String findConnectorLibPath(String dbType) {
 		DbType type = DbType.valueOf(dbType);
-		URL resource = Thread.currentThread().getContextClassLoader().getResource("logback.xml");
-		_LOG.info("jar resource: {}", resource);
-		if (resource != null) {
+//		URL resource = Thread.currentThread().getContextClassLoader().getResource("logback.xml");
+//		_LOG.info("jar resource: {}", resource);
+
+//		if (resource != null) {
 			try {
-				File file = new File(resource.toURI().getRawPath() + "/../lib/" + type.getConnectorJarFile());
-				return file.getCanonicalPath();
+//				File file = new File(resource.toURI().getRawPath() + "/../lib/" + type.getConnectorJarFile());
+                File file  = new File("src/main/lib/"+type.getConnectorJarFile());
+                return file.getCanonicalPath();
 			} catch (Exception e) {
 				throw new RuntimeException("找不到驱动文件，请联系开发者");
 			}
-		} else {
-			throw new RuntimeException("lib can't find");
-		}
+//		} else {
+//			throw new RuntimeException("lib can't find");
+//		}
 	}
 
 	public static List<String> getAllJDBCDriverJarPaths() {
