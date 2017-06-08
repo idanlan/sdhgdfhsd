@@ -12,7 +12,6 @@ import org.mybatis.generator.api.ProgressCallback;
 import org.mybatis.generator.api.ShellCallback;
 import org.mybatis.generator.config.*;
 import org.mybatis.generator.internal.DefaultShellCallback;
-import org.mybatis.generator.internal.ObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.mybatis.generator.internal.util.ClassloaderUtility.getCustomClassloader;
 
 /**
  * The bridge between GUI and the mybatis generator. All the operation to  mybatis generator should proceed through this
@@ -45,15 +42,12 @@ public class MybatisGeneratorBridge {
 	/**
 	 * The Context will share between all controller to be a the mybatis generator configuration collector
 	 */
-	private static Configuration configuration = new Configuration();
-	private static Context context = new Context(ModelType.CONDITIONAL);
-
-	static {
-		configuration.addContext(context);
-		context.addProperty("javaFileEncoding", "UTF-8");
-	}
+	private Configuration configuration = new Configuration();
+	private Context context = new Context(ModelType.CONDITIONAL);
 
     public MybatisGeneratorBridge() {
+        configuration.addContext(context);
+        context.addProperty("javaFileEncoding", "UTF-8");
     }
 
     public void setGeneratorConfig(GeneratorConfig generatorConfig) {
@@ -67,7 +61,7 @@ public class MybatisGeneratorBridge {
     public void generate() throws Exception {
 	    String connectorLibPath = ConfigHelper.findConnectorLibPath(selectedDatabaseConfig.getDbType());
 	    _LOG.info("connectorLibPath: {}", connectorLibPath);
-	    configuration.addClasspathEntry(connectorLibPath);
+        if(!configuration.getClassPathEntries().contains(connectorLibPath))configuration.addClasspathEntry(connectorLibPath);
         // Table configuration
         TableConfiguration tableConfig = new TableConfiguration(context);
         tableConfig.setTableName(generatorConfig.getTableName());
@@ -116,7 +110,6 @@ public class MybatisGeneratorBridge {
         context.setId("myid");
         context.addTableConfiguration(tableConfig);
         context.setJdbcConnectionConfiguration(jdbcConfig);
-        context.setJdbcConnectionConfiguration(jdbcConfig);
         context.setJavaModelGeneratorConfiguration(modelConfig);
         context.setSqlMapGeneratorConfiguration(mapperConfig);
         context.setJavaClientGeneratorConfiguration(daoConfig);
@@ -146,6 +139,12 @@ public class MybatisGeneratorBridge {
                 pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.MySQLLimitPlugin");
                 context.addPluginConfiguration(pluginConfiguration);
             }
+            if(DbType.Oracle.name().equals(selectedDatabaseConfig.getDbType())){
+                PluginConfiguration pluginConfiguration = new PluginConfiguration();
+                pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.PaginationPluginOracle");
+                pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.PaginationPluginOracle");
+                context.addPluginConfiguration(pluginConfiguration);
+            }
         }
         context.setTargetRuntime("MyBatis3");
 
@@ -157,9 +156,6 @@ public class MybatisGeneratorBridge {
         myBatisGenerator.generate(progressCallback, contexts, fullyqualifiedTables);
     }
 
-	public static Context getContext() {
-		return context;
-	}
 
 	public void setProgressCallback(ProgressCallback progressCallback) {
         this.progressCallback = progressCallback;
