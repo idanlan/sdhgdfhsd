@@ -44,7 +44,7 @@ public abstract class BaseFXController implements Initializable {
             dialogStage.setScene(new Scene(loginNode));
             dialogStage.setMaximized(false);
             dialogStage.setResizable(false);
-            dialogStage.show();
+//            dialogStage.show();
             controller.setDialogStage(dialogStage);
             // put into cache map
             SoftReference<BaseFXController> softReference = new SoftReference<>(controller);

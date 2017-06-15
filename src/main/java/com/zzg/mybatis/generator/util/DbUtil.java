@@ -20,6 +20,11 @@ public class DbUtil {
 
     private static Map<DbType, Driver> drivers;
 
+    /**
+     * 保持数据库连接,避免每步操作都需要重新连接
+     */
+    public static Map<String,Connection> connectionMap = new HashMap<>();
+
 	static {
 		drivers = new HashMap<>();
 		List<String> driverJars = ConfigHelper.getAllJDBCDriverJarPaths();
@@ -40,9 +45,8 @@ public class DbUtil {
     public static Connection getConnection(DatabaseConfig config) throws ClassNotFoundException, SQLException {
         String url = getConnectionUrlWithSchema(config);
 	    Properties props = new Properties();
-
-	    props.setProperty("user", config.getUsername()); //$NON-NLS-1$
-	    props.setProperty("password", config.getPassword()); //$NON-NLS-1$
+	    props.setProperty("user", config.getUsername());
+	    props.setProperty("password", config.getPassword());
 
 		DriverManager.setLoginTimeout(DB_CONNECTION_TIMEOUTS_SECONDS);
 	    Connection connection = drivers.get(DbType.valueOf(config.getDbType())).connect(url, props);
@@ -51,10 +55,15 @@ public class DbUtil {
     }
 
     public static List<String> getTableNames(DatabaseConfig config) throws Exception {
-        String url = getConnectionUrlWithSchema(config);
-        _LOG.info("getTableNames, connection url: {}", url);
-	    Connection connection = getConnection(config);
-	    try {
+        Connection connection = null;
+        if(!isEmpty(config.getName())){
+            connection = connectionMap.get(config.getName());
+        }
+        if(null==connection){
+            connection = getConnection(config);
+            connectionMap.put(config.getName(),connection);
+        }
+//	    try {
 		    List<String> tables = new ArrayList<>();
 		    DatabaseMetaData md = connection.getMetaData();
 		    ResultSet rs;
@@ -67,7 +76,7 @@ public class DbUtil {
 		    } else if (DbType.valueOf(config.getDbType()) == DbType.Oracle){
 			    rs = md.getTables(null, config.getUsername().toUpperCase(), null, new String[] {"TABLE", "VIEW"});
 		    } else if(DbType.valueOf(config.getDbType()).equals(DbType.DB2)){
-		        rs = md.getTables(null,"DS",null,new String[] {"TABLE", "VIEW"});
+		        rs = md.getTables(null,config.getSchema().split(":")[1],null,new String[] {"TABLE", "VIEW"});
             }else {
 			    rs = md.getTables(null, config.getUsername().toUpperCase(), null, null);
 		    }
@@ -75,18 +84,26 @@ public class DbUtil {
 			    tables.add(rs.getString(3));
 		    }
 		    return tables;
-	    } finally {
-	    	connection.close();
-	    }
+//	    } finally {
+//	    	connection.close();//保持连接以便下次使用
+//	    }
 	}
 
     public static List<UITableColumnVO> getTableColumns(DatabaseConfig dbConfig, String tableName) throws Exception {
-        String url = getConnectionUrlWithSchema(dbConfig);
-        _LOG.info("getTableColumns, connection url: {}", url);
-		Connection conn = getConnection(dbConfig);
-		try {
+        Connection conn = null;
+        if(!isEmpty(dbConfig.getName())){
+            conn = connectionMap.get(dbConfig.getName());
+        }
+        if(null==conn){
+            conn = getConnection(dbConfig);
+            connectionMap.put(dbConfig.getName(),conn);
+        }
+//		try {
 			DatabaseMetaData md = conn.getMetaData();
-			ResultSet rs = md.getColumns(null, null, tableName, null);
+            ResultSet rs = md.getColumns(null, null, tableName, null);
+			if(dbConfig.getDbType().equals("DB2")){
+                rs = md.getColumns(null, dbConfig.getSchema().split(":")[1], tableName, null);
+            }
 			List<UITableColumnVO> columns = new ArrayList<>();
 			while (rs.next()) {
 				UITableColumnVO columnVO = new UITableColumnVO();
@@ -96,9 +113,9 @@ public class DbUtil {
 				columns.add(columnVO);
 			}
 			return columns;
-		} finally {
-			conn.close();
-		}
+//		} finally {
+//			conn.close();
+//		}
 	}
 
     public static String getConnectionUrlWithSchema(DatabaseConfig dbConfig) throws ClassNotFoundException {
@@ -112,4 +129,11 @@ public class DbUtil {
         return connectionUrl;
     }
 
+    public static boolean isEmpty(Object o){
+	    if(null==o)return true;
+	    if(o instanceof String){
+	        return ((String) o).length()==0;
+        }
+        return false;
+    }
 }

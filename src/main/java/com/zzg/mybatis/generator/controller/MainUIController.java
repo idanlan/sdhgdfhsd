@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
+import java.sql.Connection;
 import java.sql.SQLRecoverableException;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +121,22 @@ public class MainUIController extends BaseFXController {
                 if (level == 1) {
                     final ContextMenu contextMenu = new ContextMenu();
                     MenuItem item1 = new MenuItem("关闭连接");
-                    item1.setOnAction(event1 -> treeItem.getChildren().clear());
+                    item1.setOnAction(event1 -> {
+                        //关闭当前数据库连接
+                        DatabaseConfig selectedConfig = (DatabaseConfig) treeItem.getGraphic().getUserData();
+                        try {
+                            Connection connection = DbUtil.connectionMap.get(selectedConfig.getName());
+                            if(null!=connection){
+                                tableName = null;
+                                DbUtil.connectionMap.remove(selectedConfig.getName());
+                                connection.close();
+                            }
+                        }catch (Exception e){
+                            _LOG.error(e.getMessage(), e);
+                            AlertUtil.showErrorAlert(e.getMessage());
+                        }
+                        treeItem.getChildren().clear();
+                    });
 	                MenuItem item2 = new MenuItem("编辑连接");
 	                item2.setOnAction(event1 -> {
 		                DatabaseConfig selectedConfig = (DatabaseConfig) treeItem.getGraphic().getUserData();
@@ -319,15 +335,16 @@ public class MainUIController extends BaseFXController {
             return;
         }
         SelectTableColumnController controller = (SelectTableColumnController) loadFXMLPage("定制列", FXMLPage.SELECT_TABLE_COLUMN, true);
+        controller.setColumnList(null);
+        controller.showDialogStage();
         controller.setMainUIController(this);
         try {
             // If select same schema and another table, update table data
-            if (!tableName.equals(controller.getTableName())) {
+//            if (!tableName.equals(controller.getTableName())) {
                 List<UITableColumnVO> tableColumns = DbUtil.getTableColumns(selectedDatabaseConfig, tableName);
                 controller.setColumnList(FXCollections.observableList(tableColumns));
                 controller.setTableName(tableName);
-            }
-            controller.showDialogStage();
+//            }
         } catch (Exception e) {
             _LOG.error(e.getMessage(), e);
             AlertUtil.showErrorAlert(e.getMessage());
