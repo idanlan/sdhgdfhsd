@@ -16,7 +16,7 @@ import java.util.*;
 public class DbUtil {
 
     private static final Logger _LOG = LoggerFactory.getLogger(DbUtil.class);
-    private static final int DB_CONNECTION_TIMEOUTS_SECONDS = 1;
+    private static final int DB_CONNECTION_TIMEOUTS_SECONDS = 30;
 
     private static Map<DbType, Driver> drivers;
 
@@ -66,7 +66,9 @@ public class DbUtil {
 			    }
 		    } else if (DbType.valueOf(config.getDbType()) == DbType.Oracle){
 			    rs = md.getTables(null, config.getUsername().toUpperCase(), null, new String[] {"TABLE", "VIEW"});
-		    } else {
+		    } else if(DbType.valueOf(config.getDbType()).equals(DbType.DB2)){
+		        rs = md.getTables(null,"DS",null,new String[] {"TABLE", "VIEW"});
+            }else {
 			    rs = md.getTables(null, config.getUsername().toUpperCase(), null, null);
 		    }
 		    while (rs.next()) {
@@ -101,7 +103,11 @@ public class DbUtil {
 
     public static String getConnectionUrlWithSchema(DatabaseConfig dbConfig) throws ClassNotFoundException {
 		DbType dbType = DbType.valueOf(dbConfig.getDbType());
-		String connectionUrl = String.format(dbType.getConnectionUrlPattern(), dbConfig.getHost(), dbConfig.getPort(), dbConfig.getSchema(), dbConfig.getEncoding());
+		String schemaName = dbConfig.getSchema();
+		if(dbType.name().equals("DB2")){
+            schemaName = schemaName.split(":")[0];
+        }
+		String connectionUrl = String.format(dbType.getConnectionUrlPattern(), dbConfig.getHost(), dbConfig.getPort(), schemaName, dbConfig.getEncoding());
         _LOG.info("getConnectionUrlWithSchema, connection url: {}", connectionUrl);
         return connectionUrl;
     }

@@ -19,7 +19,7 @@ import java.util.List;
  * @since 1.0.0
  *
  */
-public class PaginationPlugin extends PluginAdapter {
+public class PaginationPluginMysql extends PluginAdapter {
 
 	private final static FullyQualifiedJavaType TYPE = new FullyQualifiedJavaType("cn.com.bsfit.frms.portal.base.util.Page");
 	

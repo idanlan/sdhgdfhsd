@@ -135,8 +135,8 @@ public class MybatisGeneratorBridge {
             if (DbType.MySQL.name().equals(selectedDatabaseConfig.getDbType())
 		            || DbType.PostgreSQL.name().equals(selectedDatabaseConfig.getDbType())) {
                 PluginConfiguration pluginConfiguration = new PluginConfiguration();
-                pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.MySQLLimitPlugin");
-                pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.MySQLLimitPlugin");
+                pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.PaginationPluginMysql");
+                pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.PaginationPluginMysql");
                 context.addPluginConfiguration(pluginConfiguration);
             }
             if(DbType.Oracle.name().equals(selectedDatabaseConfig.getDbType())){

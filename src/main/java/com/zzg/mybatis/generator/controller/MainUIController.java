@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import static org.junit.Assert.assertNotNull;
-
 public class MainUIController extends BaseFXController {
 
     private static final Logger _LOG = LoggerFactory.getLogger(MainUIController.class);
@@ -148,6 +146,7 @@ public class MainUIController extends BaseFXController {
                     treeItem.setExpanded(true);
                     if (level == 1) {
                         System.out.println("index: " + leftDBTree.getSelectionModel().getSelectedIndex());
+                        System.out.println("双击链接数据库》》》》》》》》》");
                         DatabaseConfig selectedConfig = (DatabaseConfig) treeItem.getGraphic().getUserData();
                         try {
                             List<String> tables = DbUtil.getTableNames(selectedConfig);
