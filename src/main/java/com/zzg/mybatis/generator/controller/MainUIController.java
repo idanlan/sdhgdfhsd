@@ -77,6 +77,11 @@ public class MainUIController extends BaseFXController {
     private CheckBox useActualColumnNamesCheckbox;
     @FXML
     private TreeView<String> leftDBTree;
+    @FXML
+    private TextField sequence;
+
+
+
     // Current selected databaseConfig
     private DatabaseConfig selectedDatabaseConfig;
     // Current selected tableName
@@ -161,8 +166,6 @@ public class MainUIController extends BaseFXController {
                 if (event.getClickCount() == 2) {
                     treeItem.setExpanded(true);
                     if (level == 1) {
-                        System.out.println("index: " + leftDBTree.getSelectionModel().getSelectedIndex());
-                        System.out.println("双击链接数据库》》》》》》》》》");
                         DatabaseConfig selectedConfig = (DatabaseConfig) treeItem.getGraphic().getUserData();
                         try {
                             List<String> tables = DbUtil.getTableNames(selectedConfig);
@@ -191,6 +194,8 @@ public class MainUIController extends BaseFXController {
                         selectedDatabaseConfig = (DatabaseConfig) treeItem.getParent().getGraphic().getUserData();
                         this.tableName = tableName;
                         tableNameField.setText(tableName);
+                        generateKeysField.setText(null);
+                        sequence.setText(null);
                         domainObjectNameField.setText(MyStringUtils.dbStringToCamelStyle(tableName));
                     }
                 }
@@ -314,6 +319,7 @@ public class MainUIController extends BaseFXController {
         generatorConfig.setComment(commentCheckBox.isSelected());
         generatorConfig.setAnnotation(annotationCheckBox.isSelected());
         generatorConfig.setUseActualColumnNames(useActualColumnNamesCheckbox.isSelected());
+        generatorConfig.setSeqName(sequence.getText());
         return generatorConfig;
     }
 
@@ -359,6 +365,14 @@ public class MainUIController extends BaseFXController {
         this.columnOverrides = columnOverrides;
     }
 
+    public void setGenerateKeysFieldText(String text) {
+        this.generateKeysField.setText(text);
+    }
+
+    public void setSequenceText(String text){
+        this.sequence.setText(text);
+    }
+
     /**
      * 检查并创建不存在的文件夹
      *
@@ -397,6 +411,49 @@ public class MainUIController extends BaseFXController {
 			}
 		}
         return true;
+    }
+
+    @FXML
+    public void openPrimaryKeySelect(){
+        if (tableName == null) {
+            AlertUtil.showWarnAlert("请先在左侧选择数据库表");
+            return;
+        }
+
+        SelectPrimaryKeyController controller = (SelectPrimaryKeyController) loadFXMLPage("选择主键", FXMLPage.SELECT_PRIMARY_KEY, true);
+        controller.setColumnList(null);
+        controller.showDialogStage();
+        controller.setMainUIController(this);
+        try {
+            List<UITableColumnVO> tableColumns = DbUtil.getTableColumns(selectedDatabaseConfig, tableName);
+            controller.setColumnList(FXCollections.observableList(tableColumns));
+            controller.setTableName(tableName);
+        } catch (Exception e) {
+            _LOG.error(e.getMessage(), e);
+            AlertUtil.showErrorAlert(e.getMessage());
+        }
+
+    }
+    @FXML
+    public void openSequenceSelect(){
+        if (tableName == null) {
+            AlertUtil.showWarnAlert("请先在左侧选择数据库表");
+            return;
+        }
+
+        SelectSequenceController controller = (SelectSequenceController) loadFXMLPage("选择Seq序列", FXMLPage.SELECT_SEQUENCE, true);
+        controller.setColumnList(null);
+        controller.showDialogStage();
+        controller.setMainUIController(this);
+        try {
+            List<UITableColumnVO> tableColumns = DbUtil.getSequence(selectedDatabaseConfig);
+            controller.setColumnList(FXCollections.observableList(tableColumns));
+            controller.setTableName(tableName);
+        } catch (Exception e) {
+            _LOG.error(e.getMessage(), e);
+            AlertUtil.showErrorAlert(e.getMessage());
+        }
+
     }
 
 }

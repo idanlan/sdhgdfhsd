@@ -6,7 +6,6 @@ import com.zzg.mybatis.generator.model.GeneratorConfig;
 import com.zzg.mybatis.generator.plugins.DbRemarksCommentGenerator;
 import com.zzg.mybatis.generator.util.ConfigHelper;
 import com.zzg.mybatis.generator.util.DbUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.mybatis.generator.api.MyBatisGenerator;
 import org.mybatis.generator.api.ProgressCallback;
 import org.mybatis.generator.api.ShellCallback;
@@ -66,10 +65,25 @@ public class MybatisGeneratorBridge {
         TableConfiguration tableConfig = new TableConfiguration(context);
         tableConfig.setTableName(generatorConfig.getTableName());
         tableConfig.setDomainObjectName(generatorConfig.getDomainObjectName());
+
+
+        if(!DbUtil.isEmpty(generatorConfig.getSeqName())){
+            //Seq
+            String sqlStatement = "";
+            if(selectedDatabaseConfig.getDbType().equals(DbType.Oracle.name())){
+                sqlStatement = "select "+generatorConfig.getSeqName()+".nextval from dual";
+            }
+            if(selectedDatabaseConfig.getDbType().equals(DbType.DB2.name())){
+                sqlStatement = "SELECT NEXTVAL FOR "+generatorConfig.getSeqName()+" AS "+generatorConfig.getGenerateKeys()+" FROM SYSIBM.DUAL";
+            }
+            tableConfig.setGeneratedKey(new GeneratedKey(generatorConfig.getGenerateKeys(),sqlStatement,false,"pre"));
+        }
+
+
         //添加GeneratedKey主键生成
-		if (StringUtils.isNoneEmpty(generatorConfig.getGenerateKeys())) {
-			tableConfig.setGeneratedKey(new GeneratedKey(generatorConfig.getGenerateKeys(), selectedDatabaseConfig.getDbType(), true, null));
-		}
+//		if (StringUtils.isNoneEmpty(generatorConfig.getGenerateKeys())) {
+//			tableConfig.setGeneratedKey(new GeneratedKey(generatorConfig.getGenerateKeys(), selectedDatabaseConfig.getDbType(), true, null));
+//		}
 
         if (generatorConfig.getMapperName() != null) {
             tableConfig.setMapperName(generatorConfig.getMapperName());
@@ -132,19 +146,10 @@ public class MybatisGeneratorBridge {
         
         // limit/offset插件
         if (generatorConfig.isOffsetLimit()) {
-            if (DbType.MySQL.name().equals(selectedDatabaseConfig.getDbType())
-		            || DbType.PostgreSQL.name().equals(selectedDatabaseConfig.getDbType())) {
-                PluginConfiguration pluginConfiguration = new PluginConfiguration();
-                pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.PaginationPluginMysql");
-                pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.PaginationPluginMysql");
-                context.addPluginConfiguration(pluginConfiguration);
-            }
-            if(DbType.Oracle.name().equals(selectedDatabaseConfig.getDbType())){
-                PluginConfiguration pluginConfiguration = new PluginConfiguration();
-                pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.PaginationPluginOracle");
-                pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.PaginationPluginOracle");
-                context.addPluginConfiguration(pluginConfiguration);
-            }
+            PluginConfiguration pluginConfiguration = new PluginConfiguration();
+            pluginConfiguration.addProperty("type", DbType.getTypeByName(selectedDatabaseConfig.getDbType()).getPagePlugin());
+            pluginConfiguration.setConfigurationType(DbType.getTypeByName(selectedDatabaseConfig.getDbType()).getPagePlugin());
+            context.addPluginConfiguration(pluginConfiguration);
         }
         context.setTargetRuntime("MyBatis3");
 

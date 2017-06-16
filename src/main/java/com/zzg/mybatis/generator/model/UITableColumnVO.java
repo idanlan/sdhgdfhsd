@@ -22,6 +22,10 @@ public class UITableColumnVO {
 
     private StringProperty typeHandle = new SimpleStringProperty();
 
+    private StringProperty columnRemark = new SimpleStringProperty();
+
+    private StringProperty columnIsPrimaryKey = new SimpleStringProperty();
+
     public String getColumnName() {
         return columnName.get();
     }
@@ -92,5 +96,29 @@ public class UITableColumnVO {
 
     public void setJavaType(String javaType) {
         this.javaType.set(javaType);
+    }
+
+    public String getColumnRemark() {
+        return columnRemark.get();
+    }
+
+    public StringProperty columnRemarkProperty() {
+        return columnRemark;
+    }
+
+    public void setColumnRemark(String columnRemark) {
+        this.columnRemark.set(columnRemark);
+    }
+
+    public String getColumnIsPrimaryKey() {
+        return columnIsPrimaryKey.get();
+    }
+
+    public StringProperty columnIsPrimaryKeyProperty() {
+        return columnIsPrimaryKey;
+    }
+
+    public void setColumnIsPrimaryKey(String columnIsPrimaryKey) {
+        this.columnIsPrimaryKey.set(columnIsPrimaryKey);
     }
 }

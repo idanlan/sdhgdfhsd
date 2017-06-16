@@ -47,6 +47,7 @@ public class DbUtil {
 	    Properties props = new Properties();
 	    props.setProperty("user", config.getUsername());
 	    props.setProperty("password", config.getPassword());
+        props.setProperty("remarksReporting","true");
 
 		DriverManager.setLoginTimeout(DB_CONNECTION_TIMEOUTS_SECONDS);
 	    Connection connection = drivers.get(DbType.valueOf(config.getDbType())).connect(url, props);
@@ -99,24 +100,66 @@ public class DbUtil {
             connectionMap.put(dbConfig.getName(),conn);
         }
 //		try {
-			DatabaseMetaData md = conn.getMetaData();
-            ResultSet rs = md.getColumns(null, null, tableName, null);
-			if(dbConfig.getDbType().equals("DB2")){
-                rs = md.getColumns(null, dbConfig.getSchema().split(":")[1], tableName, null);
+        DatabaseMetaData md = conn.getMetaData();
+
+        String schemaName = null;
+        if(dbConfig.getDbType().equals("DB2"))schemaName = dbConfig.getSchema().split(":")[1];
+
+        ResultSet rs = md.getColumns(null, schemaName, tableName, null);
+        ResultSet rs2 = md.getPrimaryKeys(null,schemaName,tableName);
+
+
+        Set<String> primaryColSet = new HashSet<>();
+        while (rs2.next()){
+            primaryColSet.add(rs2.getString("COLUMN_NAME"));
+        }
+
+        List<UITableColumnVO> columns = new ArrayList<>();
+        while (rs.next()) {
+            UITableColumnVO columnVO = new UITableColumnVO();
+            String columnName = rs.getString("COLUMN_NAME");
+            columnVO.setColumnName(columnName);
+            if(primaryColSet.contains(columnName)){
+                columnVO.setColumnIsPrimaryKey("Y");
+            }else{
+                columnVO.setColumnIsPrimaryKey("N");
             }
-			List<UITableColumnVO> columns = new ArrayList<>();
-			while (rs.next()) {
-				UITableColumnVO columnVO = new UITableColumnVO();
-				String columnName = rs.getString("COLUMN_NAME");
-				columnVO.setColumnName(columnName);
-				columnVO.setJdbcType(rs.getString("TYPE_NAME"));
-				columns.add(columnVO);
-			}
-			return columns;
+            columnVO.setJdbcType(rs.getString("TYPE_NAME"));
+            columnVO.setColumnRemark(rs.getString("REMARKS"));
+            columns.add(columnVO);
+        }
+        return columns;
 //		} finally {
 //			conn.close();
 //		}
 	}
+
+	public static List<UITableColumnVO> getSequence(DatabaseConfig dbConfig) throws Exception{
+	    if(dbConfig.getDbType().equals(DbType.MySQL.name()))return new ArrayList<>();
+
+        Connection conn = null;
+        if(!isEmpty(dbConfig.getName())){
+            conn = connectionMap.get(dbConfig.getName());
+        }
+        if(null==conn){
+            conn = getConnection(dbConfig);
+            connectionMap.put(dbConfig.getName(),conn);
+        }
+
+        String sql="";
+        if(dbConfig.getDbType().equals(DbType.Oracle.name()))sql="select sequence_name from user_sequences";
+        if(dbConfig.getDbType().equals(DbType.DB2.name()))sql="SELECT * FROM SYSCAT.SEQUENCES WHERE SEQSCHEMA='"+dbConfig.getSchema().split(":")[1]+"'";
+
+        ResultSet rs = conn.createStatement().executeQuery(sql);
+        List<UITableColumnVO> columns = new ArrayList<>();
+        while (rs.next()){
+            UITableColumnVO columnVO = new UITableColumnVO();
+            if(dbConfig.getDbType().equals(DbType.Oracle.name()))columnVO.setColumnName(rs.getString("SEQUENCE_NAME"));
+            if(dbConfig.getDbType().equals(DbType.DB2.name()))columnVO.setColumnName(rs.getString("SEQNAME"));
+            columns.add(columnVO);
+        }
+        return columns;
+    }
 
     public static String getConnectionUrlWithSchema(DatabaseConfig dbConfig) throws ClassNotFoundException {
 		DbType dbType = DbType.valueOf(dbConfig.getDbType());

@@ -46,6 +46,8 @@ public class GeneratorConfig {
 
 	private String generateKeys;
 
+	private String seqName;
+
 	public String getName() {
 		return name;
 	}
@@ -180,5 +182,13 @@ public class GeneratorConfig {
 
 	public void setGenerateKeys(String generateKeys) {
 		this.generateKeys = generateKeys;
+	}
+
+	public String getSeqName() {
+		return seqName;
+	}
+
+	public void setSeqName(String seqName) {
+		this.seqName = seqName;
 	}
 }
