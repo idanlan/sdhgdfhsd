@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.SQLRecoverableException;
 import java.util.ArrayList;
@@ -455,5 +456,4 @@ public class MainUIController extends BaseFXController {
         }
 
     }
-
 }

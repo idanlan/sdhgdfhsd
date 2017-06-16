@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class ConnectionManager {
 
-    private static final String DB_URL = "jdbc:sqlite:./config/sqlite3.db";
+    private static final String DB_URL = "jdbc:sqlite:./lib/sqlite3.db";
 
     public static Connection getConnection() throws Exception {
         Class.forName("org.sqlite.JDBC");

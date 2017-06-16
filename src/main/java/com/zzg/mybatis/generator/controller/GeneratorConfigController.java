@@ -1,16 +1,18 @@
 package com.zzg.mybatis.generator.controller;
 
 import com.zzg.mybatis.generator.model.GeneratorConfig;
+import com.zzg.mybatis.generator.model.UITableColumnVO;
 import com.zzg.mybatis.generator.util.ConfigHelper;
 import com.zzg.mybatis.generator.view.AlertUtil;
 import javafx.collections.FXCollections;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,8 +87,40 @@ public class GeneratorConfigController extends BaseFXController {
             };
         });
         refreshTableView();
+
+        configTable.setRowFactory(new Callback<TableView<GeneratorConfig>, TableRow<GeneratorConfig>>() {
+            @Override
+            public TableRow<GeneratorConfig> call(TableView<GeneratorConfig> param) {
+                return new GeneratorConfigController.TableRowControl();
+            }
+        });
     }
 
+    class TableRowControl extends TableRow<GeneratorConfig> {
+
+        public TableRowControl() {
+            super();
+            this.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    if (event.getButton().equals(MouseButton.PRIMARY)
+                            && event.getClickCount() == 2
+                            && GeneratorConfigController.TableRowControl.this.getIndex() < configTable.getItems().size()) {
+                        try {
+                            GeneratorConfig focusedItem = configTable.getFocusModel().getFocusedItem();
+                            if(null!=focusedItem){
+                                GeneratorConfig generatorConfig = ConfigHelper.loadGeneratorConfig(focusedItem.getName());
+                                mainUIController.setGeneratorConfigIntoUI(generatorConfig);
+                                controller.closeDialogStage();
+                            }
+                        }catch (Exception e){
+                            AlertUtil.showErrorAlert(e.getMessage());
+                        }
+                    }
+                }
+            });
+        }
+    }
     public void refreshTableView() {
         try {
             List<GeneratorConfig> configs = ConfigHelper.loadGeneratorConfigs();
