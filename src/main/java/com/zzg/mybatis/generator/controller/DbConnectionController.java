@@ -109,7 +109,11 @@ public class DbConnectionController extends BaseFXController {
 	}
 
 	public void setConfig(DatabaseConfig config) {
-		isUpdate = true;
+		setConfig(config,true);
+	}
+
+	public void setConfig(DatabaseConfig config,boolean isUpdate) {
+		this.isUpdate = isUpdate;
 		nameField.setText(config.getName());
 		hostField.setText(config.getHost());
 		portField.setText(config.getPort());
@@ -119,5 +123,4 @@ public class DbConnectionController extends BaseFXController {
 		dbTypeChoice.setValue(config.getDbType());
 		schemaField.setText(config.getSchema());
 	}
-
 }

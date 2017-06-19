@@ -94,11 +94,9 @@ public class ConfigHelper {
         try {
             conn = ConnectionManager.getConnection();
             stat = conn.createStatement();
-            if (!isUpdate) {
-                ResultSet rs1 = stat.executeQuery("SELECT * from dbs where name = '" + configName + "'");
-                if (rs1.next()) {
-                    throw new RuntimeException("配置已经存在, 请使用其它名字");
-                }
+            ResultSet rs1 = stat.executeQuery("SELECT * from dbs where name = '" + configName + "'");
+            if (!isUpdate && rs1.next()) {
+                throw new RuntimeException("配置已经存在, 请使用其它名字");
             }
             String jsonStr = JSON.toJSONString(dbConfig);
             String sql;

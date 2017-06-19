@@ -32,10 +32,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.SQLRecoverableException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class MainUIController extends BaseFXController {
 
@@ -151,8 +148,17 @@ public class MainUIController extends BaseFXController {
 		                controller.setConfig(selectedConfig);
 		                controller.showDialogStage();
 	                });
-                    MenuItem item3 = new MenuItem("删除连接");
-                    item3.setOnAction(event1 -> {
+                    MenuItem item3 = new MenuItem("复制连接");
+	                item3.setOnAction(event1 -> {
+                        DatabaseConfig selectedConfig = (DatabaseConfig) treeItem.getGraphic().getUserData();
+                        selectedConfig.setName(selectedConfig.getName()+"-副本");
+                        DbConnectionController controller = (DbConnectionController) loadFXMLPage("新建数据库连接", FXMLPage.NEW_CONNECTION, false);
+                        controller.setMainUIController(this);
+                        controller.setConfig(selectedConfig,false);
+                        controller.showDialogStage();
+                    });
+                    MenuItem item4 = new MenuItem("删除连接");
+                    item4.setOnAction(event1 -> {
                         DatabaseConfig selectedConfig = (DatabaseConfig) treeItem.getGraphic().getUserData();
                         try {
                             ConfigHelper.deleteDatabaseConfig(selectedConfig.getName());
@@ -161,7 +167,11 @@ public class MainUIController extends BaseFXController {
                             AlertUtil.showErrorAlert("Delete connection failed! Reason: " + e.getMessage());
                         }
                     });
-                    contextMenu.getItems().addAll(item1, item2, item3);
+
+
+
+
+                    contextMenu.getItems().addAll(item1, item2, item3,item4);
                     cell.setContextMenu(contextMenu);
                 }
                 if (event.getClickCount() == 2) {
@@ -211,6 +221,11 @@ public class MainUIController extends BaseFXController {
         rootTreeItem.getChildren().clear();
         List<DatabaseConfig> dbConfigs = null;
         try {
+            //关闭所有链接
+            for(Map.Entry<String,Connection> entry:DbUtil.connectionMap.entrySet()){
+                if(null!=entry.getValue())entry.getValue().close();
+                DbUtil.connectionMap.remove(entry.getKey());
+            }
             dbConfigs = ConfigHelper.loadDatabaseConfig();
             for (DatabaseConfig dbConfig : dbConfigs) {
                 TreeItem<String> treeItem = new TreeItem<>();
