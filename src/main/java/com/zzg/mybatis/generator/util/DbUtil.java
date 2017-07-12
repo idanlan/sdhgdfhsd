@@ -171,6 +171,11 @@ public class DbUtil {
         _LOG.info("getConnectionUrlWithSchema, connection url: {}", connectionUrl);
         return connectionUrl;
     }
+    public static String getDb2SchemaName(DatabaseConfig dbConfig)throws Exception{
+        String schemaName = dbConfig.getSchema();
+        schemaName = schemaName.split(":")[1];
+        return null != schemaName && !"".equals(schemaName)?schemaName:"";
+    }
 
     public static boolean isEmpty(Object o){
 	    if(null==o)return true;
